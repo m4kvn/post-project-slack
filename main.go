@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/google/go-github/github"
 	"github.com/nlopes/slack"
@@ -36,13 +37,13 @@ type Setting struct {
 
 func getEnv() Env {
 	return Env{
-		Token:   os.Getenv("GITHUB_TOKEN"),
-		Webhook: os.Getenv("SLACK_WEBHOOK"),
+		Token:   os.Getenv("TOKEN_GITHUB"),
+		Webhook: os.Getenv("WEBHOOK_SLACK"),
 	}
 }
 
-func readSetting() Setting {
-	bytes, _ := ioutil.ReadFile("setting.json")
+func readSetting(fileName string) Setting {
+	bytes, _ := ioutil.ReadFile(fileName)
 	var setting Setting
 	_ = json.Unmarshal(bytes, &setting)
 	for _, u := range setting.Users {
@@ -51,9 +52,15 @@ func readSetting() Setting {
 	return setting
 }
 
+func getSettingFileName() string {
+	settingFile := flag.String("f", "setting.json", "Setting json file")
+	flag.Parse()
+	return *settingFile
+}
+
 func main() {
 	env := getEnv()
-	setting := readSetting()
+	setting := readSetting(getSettingFileName())
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: env.Token})
 	tc := oauth2.NewClient(ctx, ts)
